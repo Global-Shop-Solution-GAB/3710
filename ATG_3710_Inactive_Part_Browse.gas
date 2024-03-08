@@ -1,0 +1,94 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Coded by: SMC
+'Project Start Date: 3/21/2011
+'Hooks:
+'  BRWRC050-BROWSE-HOOK (PART BROWSE) (000016730)
+'Notes:
+'  Quote 1629 for Customer Advanced Fixtures
+'  Description:  Customer would like to filter where used results by Inactive flag in the inventory master.
+'  Spec:
+'  1.  Add radio buttons to Router Where Used screen to allow user to filter results by Inactive flag in inventory.  Choices would be Active, Inactive or All.
+'  2.  Default display to all.
+'  3. GAB:  A GAB browser will override the Part browser.  This browser will include the Active flag from the Inventory Master, to allow the user to filter on this field.  The active flag can be found as "FLAG_INACTIVE" in INVENTORY_MSTR
+
+'F.Intrinsic.Debug.ShowCallerInfo
+V.Local.sError.Declare(String)
+
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+V.Passed.777777.Set(1)
+F.Intrinsic.Control.CallSub(Inv_browser)
+
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+'	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.Main.End
+
+Program.Sub.Inv_Browser.Start
+V.Local.sError.Declare(String)
+V.Local.sCol.Declare(String)
+V.Local.sColW.Declare(String)
+V.Local.sQuery.Declare(String)
+V.Local.sFormat.Declare(String)
+V.Local.sAlign.Declare(String)
+V.Local.sRet.Declare(String)
+
+F.Intrinsic.Control.SetErrorHandler("Inv_Browser_Err")
+F.Intrinsic.Control.ClearErrors
+
+F.Intrinsic.String.Split("Part*!*Locn*!*Description*!*On Hand*!*Inactive","*!*",V.Local.sCol)
+F.Intrinsic.String.Split("2800*!*500*!*4000*!*1500*!*700","*!*",V.Local.sColW)
+F.Intrinsic.String.Split("*!**!**!*0.0000*!*","*!*",V.Local.sFormat)
+F.Intrinsic.String.Split("0*!*0*!*0*!*0*!*0","*!*",V.Local.sAlign)
+
+V.Local.sQuery.Set("SELECT PART, LOCATION, DESCRIPTION, QTY_ONHAND, FLAG_INACTIVE FROM V_INVENTORY_MSTR")
+F.Intrinsic.Control.If(V.Passed.009000,=,"RE0041")
+	F.Intrinsic.Control.If(V.Passed.000065,=,"A")
+		F.Intrinsic.String.Concat(V.Local.sQuery," WHERE FLAG_INACTIVE<>'Y'",V.Local.sQuery)
+	F.Intrinsic.Control.ElseIf(V.Passed.000071,=,"I")
+		F.Intrinsic.String.Concat(V.Local.sQuery," WHERE FLAG_INACTIVE='Y'",V.Local.sQuery)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+F.Intrinsic.String.Concat(V.Local.sQuery," ORDER BY PART ASC, LOCATION ASC",V.Local.sQuery)
+
+F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+F.Intrinsic.UI.Browser("Select a part","conx",V.Local.sQuery,V.Local.sCol,V.Local.sColW,10500,5000,V.Local.sFormat,V.Local.sAlign,V.Local.sRet)
+F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	V.Passed.009001.Set(V.Local.sRet(0))
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Inv_Browser_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+'	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Inv_Browser.End
+
+Program.Sub.Comments.Start
+${$0$}$ATG_3710_Inactive_Part_Browse$}$JCT$}$4/6/2016
+${$1$}$$}$$}$0$}$16730$}$BRWRC050-BROWSE-HOOK (PART BROWSE)$}$4/6/2016 3:29:06 PM$}$(Program: BRWRC050; Screen: BRWRC050)
+
+Program.Sub.Comments.End
+
